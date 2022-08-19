@@ -311,6 +311,7 @@ struct MemPage {
 /*
 ** Everything we need to know about an open database
 */
+// b tree 的数据结构
 struct Btree {
   Pager *pPager;        /* The page cache */
   BtCursor *pCursor;    /* A list of all open cursors */
@@ -617,10 +618,13 @@ int sqliteBtreeOpen(
 
   pBt = sqliteMalloc( sizeof(*pBt) );
   if( pBt==0 ){
+    // 结果返回
     *ppBtree = 0;
     return SQLITE_NOMEM;
   }
+  // 默认nCache 数
   if( nCache<10 ) nCache = 10;
+  // 返回结果
   rc = sqlitepager_open(&pBt->pPager, zFilename, nCache, EXTRA_SIZE);
   if( rc!=SQLITE_OK ){
     if( pBt->pPager ) sqlitepager_close(pBt->pPager);
@@ -632,6 +636,7 @@ int sqliteBtreeOpen(
   pBt->pCursor = 0;
   pBt->page1 = 0;
   pBt->readOnly = sqlitepager_isreadonly(pBt->pPager);
+  // hash结构
   sqliteHashInit(&pBt->locks, SQLITE_HASH_INT, 0);
   *ppBtree = pBt;
   return SQLITE_OK;
@@ -742,6 +747,7 @@ static int newDatabase(Btree *pBt){
     sqlitepager_unref(pRoot);
     return rc;
   }
+  // 初使化header
   strcpy(pP1->zMagic, zMagicHeader);
   pP1->iMagic = MAGIC;
   zeroPage(pRoot);

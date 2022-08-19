@@ -29,6 +29,7 @@ typedef struct HashElem HashElem;
 ** accessing this structure are really macros, so we can't really make
 ** this structure opaque.
 */
+// hash表实现
 struct Hash {
   char keyClass;          /* SQLITE_HASH_INT, _POINTER, _STRING, _BINARY */
   char copyKey;           /* True if copy of key made on insert */

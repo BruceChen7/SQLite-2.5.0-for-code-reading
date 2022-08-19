@@ -132,6 +132,7 @@ static struct lockInfo *findLockInfo(int fd){
   struct inodeKey key;
   struct stat statbuf;
   struct lockInfo *pInfo;
+  // 文件的信息
   rc = fstat(fd, &statbuf);
   if( rc!=0 ) return 0;
   memset(&key, 0, sizeof(key));
@@ -232,12 +233,14 @@ int sqliteOsOpenReadWrite(
   int *pReadonly
 ){
 #if OS_UNIX
+  // 打开文件
   id->fd = open(zFilename, O_RDWR|O_CREAT, 0644);
   if( id->fd<0 ){
     id->fd = open(zFilename, O_RDONLY);
     if( id->fd<0 ){
       return SQLITE_CANTOPEN; 
     }
+    // 设置read only = 1
     *pReadonly = 1;
   }else{
     *pReadonly = 0;

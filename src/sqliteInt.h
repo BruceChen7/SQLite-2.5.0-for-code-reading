@@ -179,7 +179,9 @@ typedef struct TriggerStack TriggerStack;
 ** Each database is an instance of the following structure
 */
 struct sqlite {
+  // b tree
   Btree *pBe;                   /* The B*Tree backend */
+  // 临时table
   Btree *pBeTemp;               /* Backend for session temporary tables */
   int flags;                    /* Miscellanous flags. See below */
   int file_format;              /* What file format version is this database? */
@@ -189,6 +191,7 @@ struct sqlite {
   int nTable;                   /* Number of tables in the database */
   void *pBusyArg;               /* 1st Argument to the busy callback */
   int (*xBusyCallback)(void *,const char*,int);  /* The busy callback */
+  // 所有的table
   Hash tblHash;                 /* All tables indexed by name */
   Hash idxHash;                 /* All (named) indices indexed by name */
   Hash tblDrop;                 /* Uncommitted DROP TABLEs */

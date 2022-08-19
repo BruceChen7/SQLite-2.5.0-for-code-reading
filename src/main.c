@@ -317,11 +317,13 @@ const char sqlite_encoding[] = "iso8859";
 ** is locked) then that step is deferred until the first call to
 ** sqlite_exec().
 */
+// 打开db的实力
 sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   sqlite *db;
   int rc;
 
   /* Allocate the sqlite data structure */
+  // malloc 初始化内存
   db = sqliteMalloc( sizeof(sqlite) );
   if( pzErrMsg ) *pzErrMsg = 0;
   if( db==0 ) goto no_mem_on_open;
@@ -338,6 +340,7 @@ sqlite *sqlite_open(const char *zFilename, int mode, char **pzErrMsg){
   db->magic = SQLITE_MAGIC_BUSY;
   
   /* Open the backend database driver */
+  // 打开btree
   rc = sqliteBtreeOpen(zFilename, mode, MAX_PAGES, &db->pBe);
   if( rc!=SQLITE_OK ){
     switch( rc ){
@@ -756,6 +759,7 @@ void sqlite_busy_timeout(sqlite *db, int ms){
 ** Cause any pending operation to stop at its earliest opportunity.
 */
 void sqlite_interrupt(sqlite *db){
+  // 设置flag
   db->flags |= SQLITE_Interrupt;
 }
 

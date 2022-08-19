@@ -133,7 +133,9 @@ static char *one_input_line(const char *zPrior, FILE *in){
   }else{
     zPrompt = mainPrompt;
   }
+  // 使用readline
   zResult = readline(zPrompt);
+  // 存放历史记录
   if( zResult ) add_history(zResult);
   return zResult;
 }
@@ -920,7 +922,9 @@ static void process_input(struct callback_data *p, FILE *in){
       if( in!=0 ) break;
       seenInterrupt = 0;
     }
+    // 输出用户输入
     if( p->echoOn ) printf("%s\n", zLine);
+    // 以.开头
     if( zLine && zLine[0]=='.' && nSql==0 ){
       int rc = do_meta_command(zLine, db, p);
       free(zLine);
@@ -962,6 +966,7 @@ static void process_input(struct callback_data *p, FILE *in){
     }
   }
   if( zSql ){
+    // 非完整的sql
     printf("Incomplete SQL: %s\n", zSql);
     free(zSql);
   }
@@ -987,6 +992,7 @@ static char *find_home_dir(void){
   }
 #endif
 
+  // 获取home_dir
   if (!home_dir) {
     home_dir = getenv("HOME");
     if (!home_dir) {
@@ -1019,6 +1025,7 @@ static void process_sqliterc(struct callback_data *p, char *sqliterc_override){
   FILE *in = NULL;
 
   if (sqliterc == NULL) {
+    // 找到home dir, 分配内存
     home_dir = find_home_dir();
     if( home_dir==0 ){
       fprintf(stderr,"%s: cannot locate your home directory!\n", Argv0);
@@ -1029,10 +1036,13 @@ static void process_sqliterc(struct callback_data *p, char *sqliterc_override){
       fprintf(stderr,"%s: out of memory!\n", Argv0);
       exit(1);
     }
+    // 获取sqliterc
     sprintf(sqliterc,"%s/.sqliterc",home_dir);
+    // 释放内存
     free(home_dir);
   }
   in = fopen(sqliterc,"r");
+  // 是否有sqliterc
   if(in) {
     printf("Loading resources from %s\n",sqliterc);
     process_input(p,in);
@@ -1049,10 +1059,12 @@ void main_init(struct callback_data *data) {
   data->mode = MODE_List;
   strcpy(data->separator,"|");
   data->showHeader = 0;
+  // 设置promt
   strcpy(mainPrompt,"sqlite> ");
   strcpy(continuePrompt,"   ...> ");
 }
 
+// shell 中执行
 int main(int argc, char **argv){
   char *zErrMsg = 0;
   struct callback_data data;
@@ -1064,6 +1076,7 @@ int main(int argc, char **argv){
   process_sqliterc(&data,NULL);
 
 #ifdef SIGINT
+  // 处理信号
   signal(SIGINT, interrupt_handler);
 #endif
   while( argc>=2 && argv[1][0]=='-' ){
@@ -1091,6 +1104,7 @@ int main(int argc, char **argv){
       argc = origArgc;
 
     }else if( strcmp(argv[1],"-html")==0 ){
+      // 处理html
       data.mode = MODE_Html;
       argc--;
       argv++;
@@ -1131,12 +1145,15 @@ int main(int argc, char **argv){
       return 1;
     }
   }
+  // 如果不是两个或3个参数
   if( argc!=2 && argc!=3 ){
     fprintf(stderr,"Usage: %s ?OPTIONS? FILENAME ?SQL?\n", Argv0);
     exit(1);
   }
+  // open db
   data.db = db = sqlite_open(argv[1], 0666, &zErrMsg);
   if( db==0 ){
+    // 打开db
     data.db = db = sqlite_open(argv[1], 0444, &zErrMsg);
     if( db==0 ){
       if( zErrMsg ){
@@ -1149,6 +1166,7 @@ int main(int argc, char **argv){
       fprintf(stderr,"Database \"%s\" opened READ ONLY!\n", argv[1]);
     }
   }
+  // 标准输出
   data.out = stdout;
   if( argc==3 ){
     if( argv[2][0]=='.' ){
