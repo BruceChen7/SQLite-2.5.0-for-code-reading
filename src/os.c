@@ -193,6 +193,7 @@ static void local_ioerr(){
 */
 int sqliteOsDelete(const char *zFilename){
 #if OS_UNIX
+  // 删除文件
   unlink(zFilename);
 #endif
 #if OS_WIN

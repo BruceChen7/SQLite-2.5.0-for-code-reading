@@ -195,6 +195,7 @@ struct sqlite {
   Hash tblHash;                 /* All tables indexed by name */
   Hash idxHash;                 /* All (named) indices indexed by name */
   Hash tblDrop;                 /* Uncommitted DROP TABLEs */
+  // 各种hash 表
   Hash idxDrop;                 /* Uncommitted DROP INDEXs */
   Hash aFunc;                   /* All functions that can be in SQL exprs */
   int lastRowid;                /* ROWID of most recent insert */

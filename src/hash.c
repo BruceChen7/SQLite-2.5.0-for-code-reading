@@ -83,6 +83,7 @@ static int ptrHash(const void *pKey, int nKey){
   return x ^ (x<<8) ^ (x>>8);
 }
 static int ptrCompare(const void *pKey1, int n1, const void *pKey2, int n2){
+  // 指针比较
   if( pKey1==pKey2 ) return 0;
   if( pKey1<pKey2 ) return -1;
   return 1;
@@ -91,6 +92,7 @@ static int ptrCompare(const void *pKey1, int n1, const void *pKey2, int n2){
 /*
 ** Hash and comparison functions when the mode is SQLITE_HASH_STRING
 */
+// 字符串hash
 static int strHash(const void *pKey, int nKey){
   return sqliteHashNoCase((const char*)pKey, nKey); 
 }
