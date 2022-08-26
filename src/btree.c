@@ -214,6 +214,7 @@ struct CellHdr {
 struct Cell {
   CellHdr h;                        /* The cell header */
   char aPayload[MX_LOCAL_PAYLOAD];  /* Key and data */
+  // page number
   Pgno ovfl;                        /* The first overflow page */
 };
 
@@ -294,6 +295,7 @@ struct MemPage {
     PageHdr hdr;                   /* Overlay page header */
   } u;
   int isInit;                    /* True if auxiliary data is initialized */
+  // 父page
   MemPage *pParent;              /* The parent of this page.  NULL for root */
   int nFree;                     /* Number of free bytes in u.aDisk[] */
   int nCell;                     /* Number of entries on this page */
@@ -516,14 +518,17 @@ static int initPage(MemPage *pPage, Pgno pgnoThis, MemPage *pParent){
   int sz;            /* The size of a Cell in bytes */
   int freeSpace;     /* Amount of free space on the page */
 
+  // 如果有父page
   if( pPage->pParent ){
     assert( pPage->pParent==pParent );
     return SQLITE_OK;
   }
   if( pParent ){
+    // 设置parrent
     pPage->pParent = pParent;
     sqlitepager_ref(pParent);
   }
+  // 已经初始化了
   if( pPage->isInit ) return SQLITE_OK;
   pPage->isInit = 1;
   pPage->nCell = 0;
@@ -939,6 +944,7 @@ int sqliteBtreeCursor(Btree *pBt, int iTable, int wrFlag, BtCursor **ppCur){
   if( rc!=SQLITE_OK ){
     goto create_cursor_exception;
   }
+  // 初始化一个page
   rc = initPage(pCur->pPage, pCur->pgnoRoot, 0);
   if( rc!=SQLITE_OK ){
     goto create_cursor_exception;
