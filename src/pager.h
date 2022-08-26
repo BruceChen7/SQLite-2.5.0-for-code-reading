@@ -24,6 +24,7 @@
 ** experiments show that a page size of 1024 gives the best speed.
 ** (The speed differences are minimal.)
 */
+// 1024个字节
 #define SQLITE_PAGE_SIZE 1024
 
 /*

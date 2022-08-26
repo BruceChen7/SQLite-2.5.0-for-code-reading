@@ -205,6 +205,7 @@ int sqliteOsDelete(const char *zFilename){
 /*
 ** Return TRUE if the named file exists.
 */
+// 文件是否存在
 int sqliteOsFileExists(const char *zFilename){
 #if OS_UNIX
   return access(zFilename, 0)==0;
@@ -573,6 +574,7 @@ int sqliteOsFileSize(OsFile *id, int *pSize){
   if( fstat(id->fd, &buf)!=0 ){
     return SQLITE_IOERR;
   }
+  // 获取文件大小
   *pSize = buf.st_size;
   return SQLITE_OK;
 #endif
@@ -591,6 +593,7 @@ int sqliteOsFileSize(OsFile *id, int *pSize){
 **
 ** Return SQLITE_OK on success and SQLITE_BUSY on failure.
 */
+// 获取读锁
 int sqliteOsReadLock(OsFile *id){
 #if OS_UNIX
   int rc;

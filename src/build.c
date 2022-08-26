@@ -414,6 +414,7 @@ void sqliteStartTable(Parse *pParse, Token *pStart, Token *pName, int isTemp){
       return;
     }
     if( db->flags & SQLITE_InTrans ){
+      // 开始事务
       rc = sqliteBtreeBeginTrans(db->pBeTemp);
       if( rc!=SQLITE_OK ){
         sqliteSetNString(&pParse->zErrMsg, "unable to get a write lock on "
