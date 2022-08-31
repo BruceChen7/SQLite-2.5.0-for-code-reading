@@ -26,6 +26,7 @@
 ** in the source file sqliteVdbe.c are allowed to see the insides
 ** of this structure.
 */
+// 声明这个结果
 typedef struct Vdbe Vdbe;
 
 /*

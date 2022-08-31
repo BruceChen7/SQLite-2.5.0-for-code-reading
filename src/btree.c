@@ -224,6 +224,7 @@ struct CellHdr {
 */
 // 数据和key都放到一起
 struct Cell {
+  // header
   CellHdr h;                        /* The cell header */
   char aPayload[MX_LOCAL_PAYLOAD];  /* Key and data */
   // page number
@@ -272,6 +273,7 @@ struct OverflowPage {
 ** file.
 */
 struct FreelistInfo {
+  // free的列表
   int nFree;
   Pgno aFree[(OVERFLOW_SIZE-sizeof(int))/sizeof(Pgno)];
 };
@@ -576,6 +578,7 @@ static int initPage(MemPage *pPage, Pgno pgnoThis, MemPage *pParent){
 
   // 如果有父page
   if( pPage->pParent ){
+    // 传入的参数必须一致
     assert( pPage->pParent==pParent );
     return SQLITE_OK;
   }
@@ -587,17 +590,25 @@ static int initPage(MemPage *pPage, Pgno pgnoThis, MemPage *pParent){
   // 已经初始化了
   if( pPage->isInit ) return SQLITE_OK;
   pPage->isInit = 1;
+  // key + value数目
   pPage->nCell = 0;
+  // 除去header
   freeSpace = USABLE_SPACE;
+  // 获取第一个cell
   idx = pPage->u.hdr.firstCell;
   while( idx!=0 ){
+    // 至少每个cell的大下要超过
     if( idx>SQLITE_PAGE_SIZE-MIN_CELL_SIZE ) goto page_format_error;
     if( idx<sizeof(PageHdr) ) goto page_format_error;
+    // 必须字节对齐
     if( idx!=ROUNDUP(idx) ) goto page_format_error;
     pCell = (Cell*)&pPage->u.aDisk[idx];
+    // 获取一个cell size
     sz = cellSize(pCell);
     if( idx+sz > SQLITE_PAGE_SIZE ) goto page_format_error;
+    // 减少相关的剩余空间
     freeSpace -= sz;
+    // 将apCell进行初始化
     pPage->apCell[pPage->nCell++] = pCell;
     idx = pCell->h.iNext;
   }
@@ -611,11 +622,14 @@ static int initPage(MemPage *pPage, Pgno pgnoThis, MemPage *pParent){
     if( pFBlk->iNext>0 && pFBlk->iNext <= idx ) goto page_format_error;
     idx = pFBlk->iNext;
   }
+  // 规划的page比较成功
+  // 特殊的case
   if( pPage->nCell==0 && pPage->nFree==0 ){
     /* As a special case, an uninitialized root page appears to be
     ** an empty database */
     return SQLITE_OK;
   }
+  // 常规的执行流要执行的部分
   if( pPage->nFree!=freeSpace ) goto page_format_error;
   return SQLITE_OK;
 
@@ -649,9 +663,11 @@ static void zeroPage(MemPage *pPage){
 ** happens.
 */
 static void pageDestructor(void *pData){
+  // 获取page
   MemPage *pPage = (MemPage*)pData;
   if( pPage->pParent ){
     MemPage *pParent = pPage->pParent;
+    //  将parent设置为NULL
     pPage->pParent = 0;
     sqlitepager_unref(pParent);
   }
@@ -1390,14 +1406,15 @@ static int moveToParent(BtCursor *pCur){
 /*
 ** Move the cursor to the root page
 */
+// 主要move cursor 到root页面
 static int moveToRoot(BtCursor *pCur){
   MemPage *pNew;
   int rc;
 
-  // 获取root页面
+  // 获取root页面，可能从磁盘中加载
   rc = sqlitepager_get(pCur->pBt->pPager, pCur->pgnoRoot, (void**)&pNew);
   if( rc ) return rc;
-  // 初始化内存页面
+  // 加载硬盘上的数据到pNew中 反序列化化内存页面
   rc = initPage(pNew, pCur->pgnoRoot, 0);
   if( rc ) return rc;
   // 不再引用该页面
@@ -1417,7 +1434,9 @@ static int moveToLeftmost(BtCursor *pCur){
   Pgno pgno;
   int rc;
 
+  // 获取leftChild 的cursor number
   while( (pgno = pCur->pPage->apCell[pCur->idx]->h.leftChild)!=0 ){
+    // 将cursor移动到child
     rc = moveToChild(pCur, pgno);
     if( rc ) return rc;
   }
@@ -1604,13 +1623,16 @@ int sqliteBtreeNext(BtCursor *pCur, int *pRes){
 static int allocatePage(Btree *pBt, MemPage **ppPage, Pgno *pPgno){
   PageOne *pPage1 = pBt->page1;
   int rc;
+  // 有空闲的page
   if( pPage1->freeList ){
     OverflowPage *pOvfl;
     FreelistInfo *pInfo;
 
     rc = sqlitepager_write(pPage1);
     if( rc ) return rc;
+    // 减少一个
     pPage1->nFree--;
+    // 获取该页
     rc = sqlitepager_get(pBt->pPager, pPage1->freeList, (void**)&pOvfl);
     if( rc ) return rc;
     rc = sqlitepager_write(pOvfl);
@@ -1624,7 +1646,9 @@ static int allocatePage(Btree *pBt, MemPage **ppPage, Pgno *pPgno){
       pPage1->freeList = pOvfl->iNext;
       *ppPage = (MemPage*)pOvfl;
     }else{
+      // 减少一个
       pInfo->nFree--;
+      // 写入page number
       *pPgno = pInfo->aFree[pInfo->nFree];
       rc = sqlitepager_get(pBt->pPager, *pPgno, (void**)ppPage);
       sqlitepager_unref(pOvfl);
@@ -1752,22 +1776,29 @@ static int fillInCell(
   const char *pPayload;
   char *pSpace;
 
+  // 初始化左子树
   pCell->h.leftChild = 0;
+  // key 的数量
   pCell->h.nKey = nKey & 0xffff;
+  // 高8位，大于64KB的key的数量
   pCell->h.nKeyHi = nKey >> 16;
+  // data的数量
   pCell->h.nData = nData & 0xffff;
+  // 大于64K的数量
   pCell->h.nDataHi = nData >> 16;
   pCell->h.iNext = 0;
 
   pNext = &pCell->ovfl;
   pSpace = pCell->aPayload;
   spaceLeft = MX_LOCAL_PAYLOAD;
+  // key
   pPayload = pKey;
   pKey = 0;
   nPayload = nKey;
   pPrior = 0;
   while( nPayload>0 ){
     if( spaceLeft==0 ){
+      // 分配一个page, page number 放到了pNext
       rc = allocatePage(pBt, (MemPage**)&pOvfl, pNext);
       if( rc ){
         *pNext = 0;
@@ -1793,6 +1824,7 @@ static int fillInCell(
     }else{
       pPayload += n;
     }
+    // 剩余的可用空间
     spaceLeft -= n;
     pSpace += n;
   }
@@ -2430,6 +2462,8 @@ int sqliteBtreeInsert(
   rc = fillInCell(pBt, &newCell, pKey, nKey, pData, nData);
   if( rc ) return rc;
   szNew = cellSize(&newCell);
+
+  // move的结果
   if( loc==0 ){
     newCell.h.leftChild = pPage->apCell[pCur->idx]->h.leftChild;
     rc = clearCell(pBt, pPage->apCell[pCur->idx]);
@@ -2439,9 +2473,13 @@ int sqliteBtreeInsert(
     assert( pPage->u.hdr.rightChild==0 );  /* Must be a leaf page */
     pCur->idx++;
   }else{
+    // 叶子节点
     assert( pPage->u.hdr.rightChild==0 );  /* Must be a leaf page */
   }
+
+  // MemPage
   insertCell(pPage, pCur->idx, &newCell, szNew);
+  // 进行balance
   rc = balance(pCur->pBt, pPage, pCur);
   /* sqliteBtreePageDump(pCur->pBt, pCur->pgnoRoot, 1); */
   /* fflush(stdout); */

@@ -65,6 +65,7 @@ typedef unsigned char Bool;
 ** Every cursor that the virtual machine has open is represented by an
 ** instance of the following structure.
 */
+// 用来指向b-tree
 struct Cursor {
   BtCursor *pCursor;    /* The cursor structure of the backend */
   int lastRecno;        /* Last recno from a Next or NextIdx operation */
@@ -110,6 +111,7 @@ struct Sorter {
 ** to the callback function.
 */
 struct Stack {
+  // stack 中的结果
   int i;         /* Integer value */
   int n;         /* Number of characters in string value, including '\0' */
   int flags;     /* Some combination of STK_Null, STK_Str, STK_Dyn, etc. */
@@ -131,6 +133,7 @@ typedef struct Mem Mem;
 /*
 ** Allowed values for Stack.flags
 */
+// stack 中的可能取值
 #define STK_Null      0x0001   /* Value is NULL */
 #define STK_Str       0x0002   /* Value is a string */
 #define STK_Int       0x0004   /* Value is an integer */
@@ -222,14 +225,18 @@ struct Vdbe {
   sqlite *db;         /* The whole database */
   Btree *pBt;         /* Opaque context structure used by DB backend */
   FILE *trace;        /* Write an execution trace here, if not NULL */
+  // 虚拟机中的指令
   int nOp;            /* Number of instructions in the program */
   int nOpAlloc;       /* Number of slots allocated for aOp[] */
+  // 指令集合
   Op *aOp;            /* Space to hold the virtual machine's program */
   int nLabel;         /* Number of labels used */
   int nLabelAlloc;    /* Number of slots allocated in aLabel[] */
   int *aLabel;        /* Space to hold the labels */
+  // top stack
   int tos;            /* Index of top of stack */
   int nStackAlloc;    /* Size of the stack */
+  // 操作数stack
   Stack *aStack;      /* The operand stack, except string values */
   char **zStack;      /* Text or binary values of the stack */
   char **azColName;   /* Becomes the 4th parameter to callbacks */
@@ -259,9 +266,12 @@ struct Vdbe {
 */
 Vdbe *sqliteVdbeCreate(sqlite *db){
   Vdbe *p;
+  // 初始化vdbe, 分配空间
   p = sqliteMalloc( sizeof(Vdbe) );
   if( p==0 ) return 0;
+  // 设置btree
   p->pBt = db->pBe;
+  // 设置db
   p->db = db;
   return p;
 }
@@ -306,13 +316,16 @@ int sqliteVdbeAddOp(Vdbe *p, int op, int p1, int p2){
     p->aOp = aNew;
     memset(&p->aOp[oldSize], 0, (p->nOpAlloc-oldSize)*sizeof(Op));
   }
+  // 操作码
   p->aOp[i].opcode = op;
+  // 第一个参数
   p->aOp[i].p1 = p1;
   if( p2<0 && (-1-p2)<p->nLabel && p->aLabel[-1-p2]>=0 ){
     p2 = p->aLabel[-1-p2];
   }
   p->aOp[i].p2 = p2;
   p->aOp[i].p3 = 0;
+  // 不会使用第三该参数
   p->aOp[i].p3type = P3_NOTUSED;
   return i;
 }
@@ -1267,11 +1280,12 @@ static int byteSwap(int x){
 ** xBusy() returns zero, or if xBusy is NULL, then execution halts
 ** and this routine returns SQLITE_BUSY.
 */
+// 在虚拟机中执行
 int sqliteVdbeExec(
   Vdbe *p,                   /* The VDBE */
   sqlite_callback xCallback, /* The callback */
   void *pArg,                /* 1st argument to callback */
-  char **pzErrMsg,           /* Error msg written here */
+  char **pzErrMsg,           /* Error msg written here */ // 写入错误的地方
   void *pBusyArg,            /* 1st argument to the busy callback */
   int (*xBusy)(void*,const char*,int)  /* Called when a file is busy */
 ){
@@ -1295,25 +1309,32 @@ int sqliteVdbeExec(
   **
   ** Allocation all the stack space we will ever need.
   */
+  // 空间是否足够
   NeedStack(p, p->nOp);
+    // text or binary value
   zStack = p->zStack;
   aStack = p->aStack;
+  // index of stack
   p->tos = -1;
   p->iLimit = 0;
   p->iOffset = 0;
 
   /* Initialize the aggregrate hash table.
   */
+  // 初始化hash
   sqliteHashInit(&p->agg.hash, SQLITE_HASH_BINARY, 0);
   p->agg.pSearch = 0;
 
   rc = SQLITE_OK;
 #ifdef MEMORY_DEBUG
   if( access("vdbe_trace",0)==0 ){
+    // 标准输出
     p->trace = stdout;
   }
 #endif
   if( sqlite_malloc_failed ) goto no_mem;
+
+  // 程序计数器
   for(pc=0; !sqlite_malloc_failed && rc==SQLITE_OK && pc<p->nOp
              VERIFY(&& pc>=0); pc++){
     pOp = &p->aOp[pc];
@@ -1334,6 +1355,7 @@ int sqliteVdbeExec(
     /* Only allow tracing if NDEBUG is not defined.
     */
 #ifndef NDEBUG
+      // 打印trace
     if( p->trace ){
       char *zP3;
       char zPtr[40];
@@ -1369,6 +1391,7 @@ int sqliteVdbeExec(
 ** the program.
 */
 case OP_Goto: {
+  // 设置无条件跳转
   pc = pOp->p2 - 1;
   break;
 }
@@ -1402,6 +1425,7 @@ case OP_Halt: {
     }
     goto abort_due_to_error;
   }else{
+    // 下一个指令
     pc = p->nOp-1;
   }
   break;
@@ -1431,8 +1455,10 @@ case OP_Integer: {
 ** NULL is pushed onto the stack.
 */
 case OP_String: {
+  // 压栈
   int i = ++p->tos;
   char *z;
+  // 分配内存
   VERIFY( if( NeedStack(p, p->tos) ) goto no_mem; )
   z = pOp->p3;
   if( z==0 ){

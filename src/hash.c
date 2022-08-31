@@ -31,8 +31,10 @@
 */
 void sqliteHashInit(Hash *new, int keyClass, int copyKey){
   assert( new!=0 );
+  // keyClass 是否合法
   assert( keyClass>=SQLITE_HASH_INT && keyClass<=SQLITE_HASH_BINARY );
   new->keyClass = keyClass;
+  // 是否copy key
   new->copyKey = copyKey &&
                 (keyClass==SQLITE_HASH_STRING || keyClass==SQLITE_HASH_BINARY);
   new->first = 0;

@@ -762,6 +762,7 @@ static int syncAllPages(Pager *pPager){
 */
 // 如果是第一页，那么就返回读锁
 // Pager用来管理整个page 页面
+// 如有必要，要从磁盘中加载
 int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
   // 页面的header
   PgHdr *pPg;
@@ -834,6 +835,7 @@ int sqlitepager_get(Pager *pPager, Pgno pgno, void **ppPage){
   }else{
     /* Search for page in cache */
     // 用来获取page number 指定的cache
+    // 可能从cache miss中找
     pPg = pager_lookup(pPager, pgno);
   }
   // 没有page header

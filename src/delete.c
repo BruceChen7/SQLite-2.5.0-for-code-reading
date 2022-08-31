@@ -31,12 +31,12 @@ Table *sqliteTableNameToTable(Parse *pParse, const char *zTab){
     return 0;
   }
   if( pTab->readOnly || pTab->pSelect ){
-    sqliteSetString(&pParse->zErrMsg, 
+    sqliteSetString(&pParse->zErrMsg,
       pTab->pSelect ? "view " : "table ",
       zTab,
       " may not be modified", 0);
     pParse->nErr++;
-    return 0;      
+    return 0;
   }
   return pTab;
 }
@@ -94,17 +94,17 @@ void sqliteDeleteFrom(
   }
   db = pParse->db;
 
-  /* Check for the special case of a VIEW with one or more ON DELETE triggers 
-  ** defined 
+  /* Check for the special case of a VIEW with one or more ON DELETE triggers
+  ** defined
   */
   zTab = sqliteTableNameFromToken(pTableName);
   if( zTab != 0 ){
     pTab = sqliteFindTable(pParse->db, zTab);
     if( pTab ){
-      row_triggers_exist = 
-        sqliteTriggersExist(pParse, pTab->pTrigger, 
+      row_triggers_exist =
+        sqliteTriggersExist(pParse, pTab->pTrigger,
             TK_DELETE, TK_BEFORE, TK_ROW, 0) ||
-        sqliteTriggersExist(pParse, pTab->pTrigger, 
+        sqliteTriggersExist(pParse, pTab->pTrigger,
             TK_DELETE, TK_AFTER, TK_ROW, 0);
     }
     sqliteFree(zTab);
@@ -128,7 +128,7 @@ void sqliteDeleteFrom(
 
   /* Allocate a cursor used to store the old.* data for a trigger.
   */
-  if( row_triggers_exist ){ 
+  if( row_triggers_exist ){
     oldIdx = pParse->nTab++;
   }
 
@@ -225,7 +225,7 @@ void sqliteDeleteFrom(
 
       sqliteVdbeAddOp(v, OP_Integer, 13, 0);
       for(i = 0; i<pTab->nCol; i++){
-        if( i==pTab->iPKey ){ 
+        if( i==pTab->iPKey ){
           sqliteVdbeAddOp(v, OP_Recno, base, 0);
 	} else {
           sqliteVdbeAddOp(v, OP_Column, base, i);
@@ -236,7 +236,7 @@ void sqliteDeleteFrom(
       sqliteVdbeAddOp(v, OP_Close, base, 0);
       sqliteVdbeAddOp(v, OP_Rewind, oldIdx, 0);
 
-      sqliteCodeRowTrigger(pParse, TK_DELETE, 0, TK_BEFORE, pTab, -1, 
+      sqliteCodeRowTrigger(pParse, TK_DELETE, 0, TK_BEFORE, pTab, -1,
           oldIdx, (pParse->trigStack)?pParse->trigStack->orconf:OE_Default,
 	  addr);
     }
@@ -256,7 +256,7 @@ void sqliteDeleteFrom(
 
     /* This is the beginning of the delete loop when there are no
     ** row triggers */
-    if( !row_triggers_exist ){ 
+    if( !row_triggers_exist ){
       addr = sqliteVdbeAddOp(v, OP_ListRead, 0, end);
     }
 
@@ -271,7 +271,7 @@ void sqliteDeleteFrom(
         sqliteVdbeAddOp(v, OP_Close, base + i, pIdx->tnum);
       }
       sqliteVdbeAddOp(v, OP_Close, base, 0);
-      sqliteCodeRowTrigger(pParse, TK_DELETE, 0, TK_AFTER, pTab, -1, 
+      sqliteCodeRowTrigger(pParse, TK_DELETE, 0, TK_AFTER, pTab, -1,
           oldIdx, (pParse->trigStack)?pParse->trigStack->orconf:OE_Default,
 	  addr);
     }

@@ -259,6 +259,7 @@ static int sqliteInit(sqlite *db, char **pzErrMsg){
     return SQLITE_NOMEM;
   }
   sqliteVdbeAddOpList(vdbe, sizeof(initProg)/sizeof(initProg[0]), initProg);
+    // 执行虚拟机指令
   rc = sqliteVdbeExec(vdbe, sqliteInitCallback, db, pzErrMsg, 
                       db->pBusyArg, db->xBusyCallback);
   sqliteVdbeDelete(vdbe);
