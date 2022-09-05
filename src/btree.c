@@ -273,7 +273,7 @@ struct OverflowPage {
 ** file.
 */
 struct FreelistInfo {
-  // free的列表
+  // free的页数
   int nFree;
   Pgno aFree[(OVERFLOW_SIZE-sizeof(int))/sizeof(Pgno)];
 };
